@@ -197,6 +197,9 @@ var Button = {
 			return false;
 	},
 	paint:		function(from)	{
+		if(from.text == "Hidden") 
+			console.log(from);
+
 		from.context.beginPath();
 		from.context.font = this.font;
 		from.context.textBaseline = 'middle';
@@ -570,7 +573,8 @@ var UI_Canvas =  {
 		else 								{ans.x  = dx + parent.x + parent.height; 	ans.y = dy + parent.y + parent.height;	}
 		ans.width = UI_Canvas.width;	ans.height = UI_Canvas.height;
 		//End Positioning and Dimensions
-
+		ans.kids 						= [];
+		ans.visible  					= true;
 		ans.backgroundVisible			= UI_Canvas.backgroundVisible;
 		ans.backgroundColor 			= UI_Canvas.backgroundColor;
 		ans.mouseOverBackgroundColor 	= UI_Canvas.mouseOverBackgroundColor;
@@ -673,19 +677,58 @@ var UI_Canvas =  {
 	keyUp: function(from){},
 };
 var HiddenCanvasButton = {	
-	x:100, y: 100, dx:0, dy:0,width:100,height:100,	
+	x:100, y: 100, dx:0, dy:0, 
 	parent: null, context: null, visible: true,
 	mouseState: "MouseOut",
-	button: null, canvas: null,
+	button: null, canvasX: null,
 	make: function(parent,dx,dy,text)
-	{	
+	{	var ans = Object.create(HiddenCanvasButton);
+		ans.parent = parent; 		ans.context = parent.context; 
+		ans.dx = dx; 				ans.dy = dy; 
+		ans.x  = dx + parent.x; 	ans.y = dy + parent.y;
+		
+		ans.button = Button.make(ans,0,0,text); 						ans.button.parent = ans;
+		ans.canvasX = UI_Canvas.make(ans,ans.button.width,0,"topLeft");	ans.canvasX.parent = ans;
+		ans.canvasX.visible = false;
 
+		return ans;
 	},
-	inside: function(from,x,y){},
-	paint: function(from){},
-	mouseDown: function(from,x,y) {},
-	mouseOver: function(from,x,y){},
-	keyDown: function(from,x,y){},
+	inside: function(from,x,y){	
+		if(from.button.inside(from.button,x,y)) 
+			return true;
+		if(from.canvasX.visible && from.canvasX.inside(from.canvasX,x,y))
+			return true;
+		return false;
+	},
+	paint: function(from){
+		from.button.paint(from.button);
+		if(from.canvasX.visible)
+		{	//console.log("Here");
+			from.canvasX.paint(from.canvasX);
+		}
+	},
+	mouseDown: function(from,x,y) {
+		if(from.button.visible && from.button.inside(from.button,x,y))
+			from.button.mouseDown(from.button,x,y);
+		if(from.canvasX.visible && from.canvasX.inside(from.canvasX,x,y))
+			from.canvasX.mouseDown(from.canvasX,x,y);
+	},
+	mouseOver: function(from,x,y){
+		from.button.mouseOver(from.button,x,y);
+		if(from.button.inside(from.button,x,y))
+			from.canvasX.visible = true;
+		else
+		{	if(!from.canvasX.inside(from.canvasX,x,y))
+				from.canvasX.visible = false;
+		}
+
+		if(from.canvasX.visible)
+			from.canvasX.mouseOver(from.canvasX,x,y);		
+	},
+	keyDown: function(from,x,y)
+	{ if(from.canvasX.visible)
+		from.canvasX.visible.keyDown(from.canvasX.visible,x,y);
+	},
 	keyUp: function(from){},
 };
 
@@ -699,6 +742,8 @@ var smButton = SmallButton.make(CanvasContainer,200,200,"+");
 var spinBox = SpinBox.make(CanvasContainer,250,205,"x:");
 var ui_canvas = UI_Canvas.make(CanvasContainer,350,200,"topLeft");
 var testButton4 = Button.make(ui_canvas,10,10,"In Canvas");
+var hiddenCanvasButton = HiddenCanvasButton.make(CanvasContainer,10,10,"File");
+var testButton5 = Button.make(hiddenCanvasButton.canvasX,10,10,"Hidden");
 
 testButton.radioGroup =  [testButton, testButton1, testButton2];
 testButton1.radioGroup = [testButton, testButton1, testButton2];
@@ -710,7 +755,10 @@ CanvasContainer.kids[3] = testText;
 CanvasContainer.kids[4] = smButton;
 CanvasContainer.kids[5] = spinBox;
 CanvasContainer.kids[6] = ui_canvas;
-ui_canvas.kids[0] = testButton4;
+CanvasContainer.kids[6].kids[0] = testButton4;
+CanvasContainer.kids[7] = hiddenCanvasButton;
+console.log(CanvasContainer.kids[7]);
+CanvasContainer.kids[7].canvasX.kids[0] = testButton5;
 CanvasContainer.paint(CanvasContainer);
 
 
