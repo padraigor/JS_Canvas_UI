@@ -31,35 +31,6 @@ var CharSets = {	// Corresponds Keystrokes to Chars
 		this.chars[57] = "9";	this.chars[105] = "9";	this.chars[74] = "j";	this.chars[84] = "t";
 	},	
 };	CharSets.setup();
-var UI_Container = {	
-	x:0, y: 0, dx:0,dy:0,width:300,height:300,kids: [], parent: null, canvas: null, 
-	backgroundColor: "black", color: "white", active: true,
-	inside: function(from,x,y) {},
-	paint:	function(from) {},	//paints all kids
-	reposition: function(from,dx,dy) {},	// repositions itself and any containers underneath
-	mouseDown: function(from) 	{}, // action
-	mouseUp: function(from) 	{}, // action
-	keyDown: function(from) 	{}, // action
-	keyUp: function(from) 		{},	// action
-};
-var UI_element = {	
-	x:0,y:0,dx:0,dy:0,width:100,height:100, parent: null, contex:null,
-	backgroundColor: "white", color: "black",
-	inside: function(from,x,y) 
-	{	if(from.x <= x && x <= from.x + from.width 
-		&& from.y <= y && y <= from.y + from.height)
-			return true;
-		else
-			return false;
-	},
-	paint:	function(from) 
-	{	
-	}, 
-	mouseDown: function(from)	{},
-	mouseUp: function(from) 	{},
-	keyDown: function(from) 	{},
-	keyUp: function(from) 		{},
-};
 var CanvasContainer = {
 	keyFocus: null, visible: true,
 	x:0, y: 0, dx:0, dy:0,width:300,height:300, mouseX: 0, mouseY: 0,
@@ -169,7 +140,7 @@ var CanvasContainer = {
 	}	
 };	CanvasContainer.setup();
 var Button = {
-	x:100, y: 100, dx:0, dy:0,width:60,height:20,	
+	x:100, y: 100, dx:0, dy:0,width:50,height:20,	
 	parent: null, context: null, visible: true,
 	text: "Click Me", font: "11pt Calibri",
 	backgroundColor: 			"lightblue",	borderColor: "darkgrey", 					textColor: "black",
@@ -197,9 +168,6 @@ var Button = {
 			return false;
 	},
 	paint:		function(from)	{
-		if(from.text == "Hidden") 
-			console.log(from);
-
 		from.context.beginPath();
 		from.context.font = this.font;
 		from.context.textBaseline = 'middle';
@@ -253,7 +221,7 @@ var Button = {
 	clickedAction: function(from){},
 }; 
 var RadioButton = {
-	x:100, y: 100, dx:0, dy:0, width:60,height: 20,	
+	x:100, y: 100, dx:0, dy:0, width:50,height: 20,	
 	parent: null, context: null, radioGroup: [], visible: true,
 	text: "Click Me", font: "11pt Calibri",
 	backgroundColor: 			"lightblue",	borderColor: "darkgrey", 					textColor: "black",
@@ -470,7 +438,7 @@ var TextBox = {
 		from.paint(from);
 	}
 };	
-var SmallButton = {
+var MiniButton = {
 	make:	function(parent,dx,dy,text){
 		var ans = Object.create(Button);	ans.text = text;
 		ans.parent = parent; 		ans.context = parent.context; 
@@ -496,9 +464,9 @@ var SpinBox = {
 		ans.dx = dx; 				ans.dy = dy; 
 		ans.x  = dx + parent.x; 	ans.y = dy + parent.y;
 		
-		ans.down = SmallButton.make(ans,0,0,"-"); 			ans.down.parent = ans;
+		ans.down = MiniButton.make(ans,0,0,"-"); 			ans.down.parent = ans;
 		ans.textBox = TextBox.make(ans,10,0,text);			ans.textBox.parent = ans;
-		ans.up = SmallButton.make(ans,ans.width-10,0,"+");	ans.up.parent = ans;
+		ans.up = MiniButton.make(ans,ans.width-10,0,"+");	ans.up.parent = ans;
 		ans.textBox.height = 10;
 		ans.textBox.width = ans.width - 20;
 		ans.textBox.text = "0.00";
@@ -564,13 +532,14 @@ var UI_Canvas =  {
 	make: function(parent,dx,dy,anchor){
 		var ans = Object.create(UI_Canvas);
 		ans.parent = parent; 			ans.context = parent.context; 
+		ans.anchor = anchor;
 		
 		//Positioning and Dimentions
 		ans.dx = dx; 					ans.dy = dy; 
-		if 		(anchor == "topLeft")		{ans.x  = dx + parent.x; 					ans.y = dy + parent.y;	}
-		else if (anchor == "topRight")		{ans.x  = dx + parent.x + parent.width; 	ans.y = dy + parent.y;	}
-		else if (anchor == "bottomLeft")	{ans.x  = dx + parent.x; 					ans.y = dy + parent.y + parent.height;	}
-		else 								{ans.x  = dx + parent.x + parent.height; 	ans.y = dy + parent.y + parent.height;	}
+		if 		(anchor == "topLeft")		{ans.x  = dx + parent.x; 							ans.y = dy + parent.y;	}
+		else if (anchor == "topRight")		{ans.x  = dx - ans.width + parent.x + parent.width; 	ans.y = dy + parent.y;	}
+		else if (anchor == "bottomLeft")	{ans.x  = dx + parent.x; 							ans.y = dy + parent.y + parent.height;	}
+		else 								{ans.x  = dx + parent.x + parent.height; 			ans.y = dy + parent.y + parent.height;	}
 		ans.width = UI_Canvas.width;	ans.height = UI_Canvas.height;
 		//End Positioning and Dimensions
 		ans.kids 						= [];
@@ -581,6 +550,12 @@ var UI_Canvas =  {
 		ans.mouseDownBackgroundColor 	= UI_Canvas.mouseDownBackgroundColor;
 		ans.mouseState 					= "MouseOut";
 		return ans;
+	},
+	reposition: function(from)
+	{	if 		(from.anchor == "topLeft")		{from.x  = from.dx + from.parent.x; 									from.y = from.dy + from.parent.y;	}
+		else if (from.anchor == "topRight")		{from.x  = from.dx - from.width    + from.parent.x + from.parent.width; from.y = from.dy + from.parent.y;	}
+		else if (from.anchor == "bottomLeft")	{from.x  = from.dx + from.parent.x; 									from.y = from.dy + from.parent.y + from.parent.height;	}
+		else 									{from.x  = from.dx + from.parent.x + from.parent.height; 				from.y = from.dy + from.parent.y + from.parent.height;	}
 	},
 	inside: function(from,x,y){
 		if(from.x <= x && x <= from.x + from.width 
@@ -738,7 +713,7 @@ var testButton = RadioButton.make(CanvasContainer,100,100);
 var testButton1 = RadioButton.make(CanvasContainer,220,80);
 var testButton2 = RadioButton.make(CanvasContainer,340,100);
 var testText = TextBox.make(CanvasContainer,100,220,"y:", "0.00");
-var smButton = SmallButton.make(CanvasContainer,200,200,"+");
+var smButton = MiniButton.make(CanvasContainer,200,200,"+");
 var spinBox = SpinBox.make(CanvasContainer,250,205,"x:");
 var ui_canvas = UI_Canvas.make(CanvasContainer,350,200,"topLeft");
 var testButton4 = Button.make(ui_canvas,10,10,"In Canvas");
@@ -757,10 +732,38 @@ CanvasContainer.kids[5] = spinBox;
 CanvasContainer.kids[6] = ui_canvas;
 CanvasContainer.kids[6].kids[0] = testButton4;
 CanvasContainer.kids[7] = hiddenCanvasButton;
-console.log(CanvasContainer.kids[7]);
 CanvasContainer.kids[7].canvasX.kids[0] = testButton5;
+
+//|Top Right Interface
+var northEastCanvas = UI_Canvas.make(CanvasContainer, -15, 15, "topRight");		CanvasContainer.kids[0] = northEastCanvas;
+northEastCanvas.width = 50; 	northEastCanvas.height = 280; //nortEastCanvas.backgroundVisible = false;
+northEastCanvas.reposition(northEastCanvas);
+
+var northMiniButton 	= MiniButton.make(northEastCanvas,20, 0,"^");			northEastCanvas.kids[0] = northMiniButton;				
+var southMiniButton 	= MiniButton.make(northEastCanvas,20,40,"v");			northEastCanvas.kids[1]= southMiniButton;				
+var eastMiniButton 		= MiniButton.make(northEastCanvas, 0,20,"<");			northEastCanvas.kids[2] = eastMiniButton;				
+var westMiniButton 		= MiniButton.make(northEastCanvas,40,20,">");			northEastCanvas.kids[3] = westMiniButton;				
+var xOffsetTextBox 		= TextBox.make(northEastCanvas, 0,10,"x:","0.00");		northEastCanvas.kids[4] = xOffsetTextBox;	
+	xOffsetTextBox.width = 50;	xOffsetTextBox.height = 10; 	 			
+var yOffsetTextBox 		= TextBox.make(northEastCanvas, 0,30,"y:","0.00");		northEastCanvas.kids[5] = yOffsetTextBox;				
+	yOffsetTextBox.width = 50;	yOffsetTextBox.height = 10; 
+var zoomSpinBox			= SpinBox.make(northEastCanvas,-10,60, "z:");			northEastCanvas.kids[6] = zoomSpinBox;
+var rotationSpinBox		= SpinBox.make(northEastCanvas,-10,80, "r:");			northEastCanvas.kids[7] = rotationSpinBox;
+	rotationSpinBox.down.text = "v"; rotationSpinBox.up.text = "^";
+
+var rowRadioButton		= RadioButton.make(northEastCanvas,0,110);				northEastCanvas.kids[8] = rowRadioButton;
+var laneRadioButton		= RadioButton.make(northEastCanvas,0,140);				northEastCanvas.kids[9] = laneRadioButton;
+var nodeRadioButton		= RadioButton.make(northEastCanvas,0,170);				northEastCanvas.kids[10] = nodeRadioButton;
+var noGoRadioButton		= RadioButton.make(northEastCanvas,0,200);				northEastCanvas.kids[11] = noGoRadioButton;
+var imageRadioButton	= RadioButton.make(northEastCanvas,0,230);				northEastCanvas.kids[12] = imageRadioButton;
+var delRadioButton		= RadioButton.make(northEastCanvas,0,260);				northEastCanvas.kids[13] = delRadioButton;
+
+	rowRadioButton.text = "Row";		rowRadioButton.radioGroup =   [rowRadioButton, laneRadioButton, nodeRadioButton, noGoRadioButton, imageRadioButton, delRadioButton];
+	laneRadioButton.text = "Lane";		laneRadioButton.radioGroup =  [rowRadioButton, laneRadioButton, nodeRadioButton, noGoRadioButton, imageRadioButton, delRadioButton];
+	nodeRadioButton.text = "Node";		nodeRadioButton.radioGroup =  [rowRadioButton, laneRadioButton, nodeRadioButton, noGoRadioButton, imageRadioButton, delRadioButton];
+	noGoRadioButton.text = "NoGo";		noGoRadioButton.radioGroup =  [rowRadioButton, laneRadioButton, nodeRadioButton, noGoRadioButton, imageRadioButton, delRadioButton];
+	imageRadioButton.text = "Image";	imageRadioButton.radioGroup = [rowRadioButton, laneRadioButton, nodeRadioButton, noGoRadioButton, imageRadioButton, delRadioButton];
+	delRadioButton.text = "Del";		delRadioButton.radioGroup =   [rowRadioButton, laneRadioButton, nodeRadioButton, noGoRadioButton, imageRadioButton, delRadioButton];
+
+//End Top Right Interface
 CanvasContainer.paint(CanvasContainer);
-
-
-
-

@@ -1,14 +1,13 @@
 create a new repository on the command line
 
 
-
 git init
 
 git add README.md
 
 git commit -m "first commit"
 
-git remote add origin https://github.com/padraigor/test.git
+git remote add origin https://github.com/padraigor/JS_Canvas_UI.git
 
 git push -u origin master
 
@@ -18,6 +17,9 @@ git push -u origin master
 
 
 
-git remote add origin https://github.com/padraigor/test.git
+git remote add origin https://github.com/padraigor/JS.git
 
 git push -u origin master
+
+Commit Files
+git commit -m 'Commit Tag'
